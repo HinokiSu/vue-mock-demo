@@ -27,7 +27,7 @@ export default defineComponent({
 
     const getUserData = () => {
       axios
-        .get("/api/data")
+        .get("/api/data") // 与mock中的url一致
         .then((res) => {
           userList.value = res.data.data;
           console.log(res.data);
