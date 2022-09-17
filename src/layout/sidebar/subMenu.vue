@@ -1,43 +1,60 @@
 <template>
-  <div class="submenu__container" v-if="item.meta && !item.meta.hidden">
+  <div v-if="item.meta && !item.meta.hidden">
     <!-- 含children.length =1 或 =0 子级路由 -->
-    <template
-      v-if="
-        hasOneShowingChild(item.children, item) &&
-        (!onlyOneChild.children || onlyOneChild.noShowingChildren) &&
-        !item.alwaysShow
-      "
-    >
+    <template v-if="hasOneShowingChild(item.children, item)">
       <link-item
         v-if="onlyOneChild.meta"
         :to-path="resolvePath(onlyOneChild.path)"
       >
-        <menu-item :title="onlyOneChild.meta.title"></menu-item>
+        <div :class="{ 'submenu-title--noDropdown': !isNest }">
+          <menu-item :title="onlyOneChild.meta.title"></menu-item>
+        </div>
       </link-item>
     </template>
 
     <!-- 含有 children.length > 1 子级路由, 递归 -->
     <div v-else>
-      <menu-item v-if="item.meta" :title="item.meta.title"></menu-item>
-      <sub-menu
-        class="submenu-set__container"
-        v-for="child in item.children"
-        :key="child.path"
-        :item="child"
-        :base-path="resolvePath(child.path)"
+      <!-- 父级标题 -->
+      <menu-item
+        class="submenu-set-title"
+        v-if="item.meta"
+        :title="item.meta.title"
+        @click="handleClick"
       >
-      </sub-menu>
+        <span> -> </span>
+      </menu-item>
+      <!-- 菜单子项合集 -->
+      <div class="submenu-set__container" v-show="expanded">
+        <sub-menu
+          class="submenu-set__item"
+          v-for="child in item.children"
+          :key="child.path"
+          :item="child"
+          :base-path="resolvePath(child.path)"
+          :is-nest="true"
+        >
+        </sub-menu>
+      </div>
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { computed, defineComponent, PropType, ref } from 'vue'
+import {
+  computed,
+  defineComponent,
+  inject,
+  PropType,
+  Ref,
+  ref,
+  toRef,
+} from 'vue'
 import { RouteRecordRaw } from 'vue-router'
 import MenuItem from './MenuItem.vue'
 import LinkItem from './LinkItem.vue'
 import { isExternal } from '@/utils/validate'
 import { resolve } from 'path-browserify'
+import { handleClickSubMenuKey, openedSubMenusKey } from './keys'
 
 export default defineComponent({
   name: 'SubMenu',
@@ -52,6 +69,11 @@ export default defineComponent({
     basePath: {
       type: String,
       default: '',
+    },
+    // 是否是子项
+    isNest: {
+      type: Boolean,
+      default: false,
     },
   },
   setup(props) {
@@ -70,7 +92,6 @@ export default defineComponent({
     }
 
     const onlyOneChild = ref()
-    let flag = 1
     const hasOneShowingChild = (children = [], parent: any) => {
       const showingChildren = children.filter((item: any) => {
         // 是否设置为 隐藏
@@ -93,25 +114,77 @@ export default defineComponent({
       // Show parent if there are no child router to display
       // 若没有可以显示的子级路由，则显示 父级路由
       if (showingChildren.length === 0) {
-        console.log(flag)
         onlyOneChild.value = { ...parent, path: '', noShowingChildren: true }
         return true
       }
 
+      // showingChildren > 1
       return false
+    }
+
+    // 提供一个默认值，由于是响应式的所有需要ref([])将undefined类型移除
+    const openedSubMenus = inject(openedSubMenusKey, ref([]))
+    // 注入时为了表明提到共的默认值是个函数，需要传入第三个参数
+    const handleClickSubMenu = inject(handleClickSubMenuKey, () => {}, false)
+
+    // 控制子项菜单集的 显示
+    const expanded = computed(() =>
+      openedSubMenus.value.includes(basePath.value)
+    )
+    // 处理点击事件
+    const handleClick = () => {
+      handleClickSubMenu(basePath.value)
     }
     return {
       resolvePath,
-      hasOneShowingChild,
       onlyOneChild,
+      hasOneShowingChild,
+      expanded,
+      handleClick,
     }
   },
 })
 </script>
 
 <style lang="less" scoped>
-.submenu-set__container {
-  padding-left: 20px;
-  background: rgba(87, 81, 109, 0.237);
+.submenu-title--noDropdown {
+  font-weight: 400;
+  color: #444;
+
+  &:hover {
+    font-weight: 500;
+    color: #222;
+    background-color: white;
+  }
 }
+.submenu-set-title {
+  font-size: 0.95rem;
+  font-weight: 400;
+  color: #555;
+  cursor: pointer;
+
+  &:hover {
+    font-weight: 500;
+    background-color: white;
+  }
+}
+// 子级 菜单项
+.submenu-set__container {
+  background-color: rgba(144, 148, 147, 0.284);
+
+  .submenu-set__item {
+    padding-left: 20px;
+    font-size: 0.95rem;
+    font-weight: 400;
+    color: #444;
+    &:hover {
+      background-color: rgb(244, 244, 244);
+      font-weight: 600;
+      color: #222;
+      background-color: white;
+    }
+  }
+}
+
+// 子级 菜单项的 父级
 </style>

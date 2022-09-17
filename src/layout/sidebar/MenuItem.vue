@@ -1,5 +1,8 @@
 <template>
-  <div class="menu-item__main">{{ title }}</div>
+  <div class="menu-item__title">
+    <span>{{ title }}</span>
+    <slot></slot>
+  </div>
 </template>
 
 <script lang="ts">
@@ -20,12 +23,11 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
-.menu-item__main {
-  padding: 8px;
-  color: rgba(151, 159, 159, 0.747);
-
+.menu-item__title {
+  padding: 16px;
+  color: rgba(153, 153, 153);
   &:hover {
-    background: rgb(246, 224, 224);
+    color: #444;
   }
 }
 </style>
