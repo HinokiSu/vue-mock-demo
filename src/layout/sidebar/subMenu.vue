@@ -2,14 +2,13 @@
   <div v-if="item.meta && !item.meta.hidden">
     <!-- 含children.length =1 或 =0 子级路由 -->
     <template v-if="hasOneShowingChild(item.children, item)">
-      <link-item
-        v-if="onlyOneChild.meta"
-        :to-path="resolvePath(onlyOneChild.path)"
-      >
-        <div :class="{ 'submenu-title--noDropdown': !isNest }">
-          <menu-item :title="onlyOneChild.meta.title"></menu-item>
-        </div>
-      </link-item>
+      <div :class="{ 'submenu-title--noDropdown': !isNest }">
+        <menu-item
+          v-if="onlyOneChild.meta"
+          :title="onlyOneChild.meta.title"
+          :path="resolvePath(onlyOneChild.path)"
+        ></menu-item>
+      </div>
     </template>
 
     <!-- 含有 children.length > 1 子级路由, 递归 -->
@@ -19,13 +18,16 @@
         class="submenu-set-title"
         v-if="item.meta"
         :title="item.meta.title"
+        :path="item.path"
         @click="handleClick"
+        :key="item.path"
       >
         <span> -> </span>
       </menu-item>
       <!-- 菜单子项合集 -->
       <div class="submenu-set__container" v-show="expanded">
         <sub-menu
+          ref="subMenuRef"
           class="submenu-set__item"
           v-for="child in item.children"
           :key="child.path"
@@ -43,22 +45,23 @@
 import {
   computed,
   defineComponent,
+  getCurrentInstance,
   inject,
+  onMounted,
+  onUnmounted,
   PropType,
-  Ref,
+  provide,
   ref,
-  toRef,
 } from 'vue'
 import { RouteRecordRaw } from 'vue-router'
 import MenuItem from './MenuItem.vue'
-import LinkItem from './LinkItem.vue'
 import { isExternal } from '@/utils/validate'
 import { resolve } from 'path-browserify'
 import { handleClickSubMenuKey, openedSubMenusKey } from './keys'
 
 export default defineComponent({
   name: 'SubMenu',
-  components: { MenuItem, LinkItem },
+  components: { MenuItem },
   props: {
     // 路由对象
     item: {
@@ -78,6 +81,7 @@ export default defineComponent({
   },
   setup(props) {
     const basePath = computed(() => props.basePath)
+
     // 解析路由地址
     const resolvePath = (routePath: string) => {
       // 判断是否是外部地址
@@ -135,6 +139,7 @@ export default defineComponent({
     const handleClick = () => {
       handleClickSubMenu(basePath.value)
     }
+
     return {
       resolvePath,
       onlyOneChild,
@@ -147,6 +152,9 @@ export default defineComponent({
 </script>
 
 <style lang="less" scoped>
+.active {
+  color: blue;
+}
 .submenu-title--noDropdown {
   font-weight: 400;
   color: #444;
@@ -158,19 +166,19 @@ export default defineComponent({
   }
 }
 .submenu-set-title {
-  font-size: 0.95rem;
   font-weight: 400;
-  color: #555;
+  color: #444;
   cursor: pointer;
 
   &:hover {
     font-weight: 500;
+    color: #222;
     background-color: white;
   }
 }
 // 子级 菜单项
 .submenu-set__container {
-  background-color: rgba(144, 148, 147, 0.284);
+  background-color: rgba(200, 200, 200, 0.242);
 
   .submenu-set__item {
     padding-left: 20px;

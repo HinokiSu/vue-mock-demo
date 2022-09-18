@@ -11,18 +11,14 @@
 </template>
 
 <script lang="ts">
-import {
-  computed,
-  defineComponent,
-  InjectionKey,
-  onMounted,
-  provide,
-  ref,
-} from 'vue'
+import { computed, defineComponent, onMounted, provide, ref } from 'vue'
 import { usePermissionStore } from '../../store'
 import SubMenu from './subMenu.vue'
 import MenuItem from './MenuItem.vue'
-import { handleClickSubMenuKey, openedSubMenusKey } from './keys'
+import {
+  handleClickSubMenuKey,
+  openedSubMenusKey,
+} from './keys'
 
 export default defineComponent({
   components: { SubMenu, MenuItem },
@@ -59,7 +55,29 @@ export default defineComponent({
     provide(handleClickSubMenuKey, handleClickSubMenu)
     provide(openedSubMenusKey, openedSubMenus)
 
-    return { routes }
+    /*  // 激活状态
+    const activeChildesState = ref<any[]>([])
+    // 激活状态控制
+    const addChild = (index: any, child: any) => {
+      activeChildesState.value[index] = child
+    }
+
+    const removeChild = (index: number) => {
+      delete activeChildesState.value[index]
+    } */
+
+    /* provide(addChildKey, addChild)
+    provide(removeChildKey, removeChild)
+
+    provide(activeChildesStateKey, activeChildesState) */
+
+    // console.log(instance.parent.hasOwnProperty('expose'))
+
+   
+
+    return {
+      routes,
+    }
   },
 })
 </script>
